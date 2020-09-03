@@ -2,6 +2,7 @@
 from bs4 import BeautifulSoup
 from PyRSS2Gen import RSSItem, Guid
 import ScrapeNFeed
+from datetime import datetime
 
 
 class OReillyFeed(ScrapeNFeed.ScrapedFeed):
@@ -33,22 +34,28 @@ class OReillyFeed(ScrapeNFeed.ScrapedFeed):
 def mk_rss(l, prepend_to_link=None):
     if l.select_one('h1') is not None:
         title = l.select_one('h1').contents[0]
-        # desc = l.select_one('p.subhead').contents[0]
-        date = l.parent.select_one('time').contents[0]
     else:
         title = l.select_one('h2').contents[0]
-        date = l.parent.select_one('time').contents[0]
     desc = l.select_one('p.subhead').contents[0]
+    author = l.parent.select_one(".field-author").contents[0].strip()
+
+    date_str = l.parent.select_one('time').contents[0]
+    date = datetime.strptime(date_str, '%b %d, %Y')
+    ctime = date.ctime()
+    pub_date = (f'{ctime[0:3]}, {date.day:02d} {ctime[4:7]}'
+                + date.strftime(' %Y %H:%M:%S %z'))
+
     link = l['href']
     if prepend_to_link is not None:
         link = f"{prepend_to_link}{link}"
-    print(f"mk_rss: {title} - {link}")
+    print(f"mk_rss: {title} by {author} on {pub_date} - {link}")
     return RSSItem(
-        link=l.href,
+        link=link,
         description=desc,
         guid=Guid(link),
-        pubDate=date,
-        title=title
+        pubDate=pub_date,
+        title=title,
+        author=author
     )
 
 
@@ -70,7 +77,7 @@ class FPMFeed(ScrapeNFeed.ScrapedFeed):
 
 
 FPMFeed.load("New FrontPageMag posts",
-             'https://www.frontpagemag.com/',
+             'https://www.frontpagemag.com',
              "FrontPageMag RSS feed - unofficial",
              'fpm.xml',
              'fpm-state.pickle')
