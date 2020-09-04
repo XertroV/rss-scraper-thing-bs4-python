@@ -34,12 +34,13 @@ class OReillyFeed(ScrapeNFeed.ScrapedFeed):
 
 def mk_rss(l, prepend_to_link=None):
     if l.select_one('h1') is not None:
-        title = l.select_one('h1').contents[0]
+        title = ''.join(l.select_one('h1').strings)
     else:
-        title = l.select_one('h2').contents[0]
+        title = ''.join(l.select_one('h2').strings)
 
     subhead = l.select_one('p.subhead')
     desc = "(no description)" if subhead is None else subhead.contents[0]
+
     author = l.parent.select_one(".field-author").contents[0].strip()
 
     date_str = l.parent.select_one('time').contents[0]
