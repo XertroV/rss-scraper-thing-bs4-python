@@ -40,6 +40,7 @@ def mk_rss(l, prepend_to_link=None):
 
     subhead = l.select_one('p.subhead')
     desc = "(no description)" if subhead is None else subhead.contents[0]
+    desc += "\n"  # this way we don't get one giant line for RSS output
 
     author = l.parent.select_one(".field-author").contents[0].strip()
 
