@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from PyRSS2Gen import RSSItem, Guid
 import ScrapeNFeed
 from datetime import datetime
+import urllib.parse
 
 
 class OReillyFeed(ScrapeNFeed.ScrapedFeed):
@@ -36,7 +37,9 @@ def mk_rss(l, prepend_to_link=None):
         title = l.select_one('h1').contents[0]
     else:
         title = l.select_one('h2').contents[0]
-    desc = l.select_one('p.subhead').contents[0]
+
+    subhead = l.select_one('p.subhead')
+    desc = "(no description)" if subhead is None else subhead.contents[0]
     author = l.parent.select_one(".field-author").contents[0].strip()
 
     date_str = l.parent.select_one('time').contents[0]
@@ -69,7 +72,9 @@ class FPMFeed(ScrapeNFeed.ScrapedFeed):
         # print(f"articles: {articles}")
         # all_links = homepage('a')
         links = list([art.select_one('a') for art in articles])
-        rss_items = list([mk_rss(l, prepend_to_link=self.baseURL) for l in links])
+        parsed_url = urllib.parse.urlparse(self.baseURL)
+        # print(parsed_url)        
+        rss_items = list([mk_rss(l, prepend_to_link=f"https://{parsed_url.netloc}") for l in links])
         # print(rss_items)
         self.addRSSItems(rss_items)
 
@@ -81,3 +86,9 @@ FPMFeed.load("New FrontPageMag posts",
              "FrontPageMag RSS feed - unofficial",
              'fpm.xml',
              'fpm-state.pickle')
+
+FPMFeed.load("The Point blog on FPM - new posts",
+             'https://www.frontpagemag.com/point/',
+             "The Point (FPM) RSS feed - unofficial",
+             'fpm-the-point.xml',
+             'fpm-the-point-state.pickle')
